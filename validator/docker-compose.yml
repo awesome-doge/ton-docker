@@ -3,28 +3,26 @@ version: '3.8'
 services:
   ton-node:
     build:
-      context: ./  # Assuming the Dockerfile is in 'ton-docker' directory
-      dockerfile: Dockerfile  # This is the default and can be omitted
-      # args:
-      #   - NO_CACHE=1
+      context: ./  
+      dockerfile: Dockerfile 
+
     image: ton-docker:latest
     container_name: ton-node
     ports:
       - "9527:9527"
       - "9528:9528"
-    volumes:
-      - ton-work-db:/var/ton-work/db
+
     environment:
-      - PUBLIC_IP=220.135.55.33
-      - CONSOLE_PORT=9527
-      - LITESERVER=true
+      - PUBLIC_IP=125.228.116.218
+      - VALIDATOR_PORT=9527
+      - LITESERVER=true # 是否開啟 Liteserver
       - LITE_PORT=9528
-      # - VALIDATOR_VERBOSITY=3
-      # - VALIDATOR_THREADS=3
-      # - VALIDATOR_STATE_TTL=315360000
-      # - VALIDATOR_ARCHIVE_TTL=315360000
-      # - VALIDATOR_BLOCK_TTL=315360000
-    entrypoint: ["/var/ton-work/db/init.sh"]
+      - VALIDATOR_VERBOSITY=2 # LOG 能見度
+      - VALIDATOR_THREADS=2 # 使用的 執行序數量
+      - ARCHIVE_NODE=0 # 是否回 歸檔節點
+      - MAINNET=1 # 是否為主網
+    volumes:
+      - ton-fullnode:/var/ton-work/db
 
 volumes:
-  ton-work-db:
+  ton-fullnode:
