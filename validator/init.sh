@@ -122,6 +122,48 @@ generate_server_key() {
     fi
 }
 
+# dev
+generate_dht_key() {
+    # dht, dht.pub  
+    read -r DHT_ID1 DHT_ID2 <<< $(generate-random-id -m keys -n dht)
+    if [ $? -ne 0 ]; then
+        echo -e "${COLOR_RED}- 生成 一組 DHT_ID1 DHT_ID2 失敗${ENDC}"
+        exit 1
+    else
+        echo -e "DHT IDs:"
+        echo -e "    dht    : ${COLOR_GREEN}$DHT_ID1${ENDC}"
+        echo -e "    dht.pub: ${COLOR_GREEN}$DHT_ID2${ENDC}"
+    fi
+
+    echo -e "- 寫入 dht key 到 /var/ton-work/db/keyring/"
+    cp dht /var/ton-work/db/keyring/$DHT_ID1
+    if [ $? -ne 0 ]; then
+        echo -e "${COLOR_RED}- 寫入 dht certificate 到 /var/ton-work/db/keyring/ 失敗{ENDC}"
+        exit 1
+    fi
+}
+
+# dev
+generate_fullnode_key() {
+    # fullnode, fullnode.pub  
+    read -r FULLNODE_ID1 FULLNODE_ID2 <<< $(generate-random-id -m keys -n fullnode)
+    if [ $? -ne 0 ]; then
+        echo -e "${COLOR_RED}- 生成 一組 FULLNODE_ID1 FULLNODE_ID2 失敗${ENDC}"
+        exit 1
+    else
+        echo -e "FULLNODE IDs:"
+        echo -e "    andl    : ${COLOR_GREEN}$FULLNODE_ID1${ENDC}"
+        echo -e "    andl.pub: ${COLOR_GREEN}$FULLNODE_ID2${ENDC}"
+    fi
+
+    echo -e "- 寫入 fullnode key 到 /var/ton-work/db/keyring/"
+    cp fullnode /var/ton-work/db/keyring/$FULLNODE_ID1
+    if [ $? -ne 0 ]; then
+        echo -e "${COLOR_RED}- 寫入 fullnode key 到 /var/ton-work/db/keyring/ 失敗{ENDC}"
+        exit 1
+    fi
+}
+
 generate_client_key() {
     # client, client.pub
     read -r CLIENT_ID1 CLIENT_ID2 <<< $(generate-random-id -m keys -n client)
@@ -136,8 +178,7 @@ generate_client_key() {
     
     # 修改 control.template 文件
     # 替換 VALIDATOR_PORT --> CONSOLE-PORT
-    # 替換 SERVER_ID2 --> SERVER-ID 
-    # 替換 CLIENT_ID2 --> CLIENT-ID
+
     # 生成的結果 control.template --> control.new
 
     # client.pub server.pub 寫入 config.json
@@ -201,6 +242,85 @@ replace_ip_port_config_json() {
     mv /var/ton-work/db/config_updated.json /var/ton-work/db/config.json
 }
 
+replace_validator_config() {
+    # @type at the root
+    # jq '."@type"' input.json
+
+    # out_port
+    jq '.out_port' input.json
+
+    # first addr's @type
+    # jq '.addrs[0]."@type"' input.json
+
+    # first addr's ip
+    jq '.addrs[0].ip' input.json
+
+    # first addr's port
+    jq '.addrs[0].port' input.json
+
+# # first addr's categories
+# jq '.addrs[0].categories[]' input.json
+# }
+
+replace_controlInterface() {
+    # control's @type
+    # jq '.control[0]."@type"' input.json
+
+    # control's id
+    jq '.control[0].id' input.json
+
+    # control's port
+    jq '.control[0].port' input.json
+        server
+}
+
+replace_controlprocess {
+    # control's allowed @type
+    # jq '.control[0].allowed[0]."@type"' input.json
+
+    # control's allowed id
+    jq '.control[0].allowed[0].id' input.json
+
+    # control's allowed permissions
+    # jq '.control[0].allowed[0].permissions' input.json
+    client
+}
+
+replace_dht_key {
+    # jq '.adnl[0]."@type"' input.json
+    jq '.adnl[0].id' input.json
+    # jq '.adnl[0].category' input.json
+
+    # jq '.dht[0]."@type"' input.json
+    jq '.dht[0].id' input.json
+
+    adnl
+    dht
+}
+
+replace_fullnode_key {
+
+    # jq '.adnl[1]."@type"' input.json
+    jq '.adnl[1].id' input.json
+    # jq '.adnl[1].category' input.json
+
+    jq '.fullnode' input.json
+
+    adnl
+    fullnode
+}
+
+replace_liteserver_key() {
+    # liteserver's @type
+    # jq '.liteservers[0]."@type"' input.json
+
+    # liteserver's id
+    jq '.liteservers[0].id' input.json
+
+    # liteserver's port
+    jq '.liteservers[0].port' input.json
+}
+
 env_variable
 
 echo -e "------------------------------------------------------------"
@@ -227,6 +347,10 @@ else
     generate_config_json
 fi
 # 生成 兩個 adnl key , 一個 for fullnode 一個 for dht
+# "fullnode" : "3yR2qk2y76s06qC88Pw1tDTZuKymHD3pxJrz1pvX3Ao=",
+# "dht" : : "TZuJr2CPBL6f+J9IOv8ehWSMoMBpSZEjn5hBxUPFWqM="
+# 替換 SERVER_ID2 --> SERVER-ID engine.controlInterface
+# 替換 CLIENT_ID2 --> CLIENT-ID engine.controlProcess
 
 echo -e "------------------------------------------------------------"
 
@@ -237,8 +361,11 @@ if [ -f "./server" ]; then
 else 
     echo -e "- 生成 server key, server.pub key"
     generate_server_key
+    # replace_controlinterface
 fi
 # 寫入 server 到 /var/ton-work/db/keyring/
+
+
 
 echo -e "------------------------------------------------------------"
 
@@ -250,6 +377,7 @@ if [ -f "./client" ]; then
 else
     echo -e "- 生成 client key, client.pub key"
     generate_client_key
+    # replace_controlprocess
 fi
 # 寫入 client 到 /var/ton-work/db/keyring/
 
@@ -262,8 +390,38 @@ if [ -f "./liteserver" ]; then
 else 
     echo -e "- 生成 liteserver key, liteserver.pub key"
     generate_liteserver_key
+    # replace_liteserver_key
 fi
 # 寫入 liteserver 到 /var/ton-work/db/keyring/
+
+
+
+echo -e "------------------------------------------------------------"
+
+echo -e "${COLOR_YELLOW}檢查 dht key, dht.pub key${ENDC}"
+
+if [ -f "./dht" ]; then
+    echo -e "- 存在 dht key, dht.pub key"
+else 
+    echo -e "- 生成 dht key, dht.pub key"
+    generate_dht_key
+    # replace_dht_key
+fi
+# 寫入 dht 到 /var/ton-work/db/keyring/
+
+echo -e "------------------------------------------------------------"
+
+echo -e "${COLOR_YELLOW}檢查 fullnode key, fullnode.pub key${ENDC}"
+
+if [ -f "./fullnode" ]; then
+    echo -e "- 存在 fullnode key, fullnode.pub key"
+else 
+    echo -e "- 生成 fullnode key, fullnode.pub key"
+    generate_fullnode_key
+    # replace_fullnode_key
+fi
+# 寫入 fullnode 到 /var/ton-work/db/keyring/
+
 
 # 格式化
 jq '.' config.json > temp.json && mv temp.json config.json
@@ -290,3 +448,6 @@ exec validator-engine /var/ton-work/db/config.json --global-config /usr/bin/ton/
 
 
 
+
+# gc's @type
+# jq '.gc."@type"' input.json
