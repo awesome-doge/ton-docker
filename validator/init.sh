@@ -29,6 +29,7 @@ env_variable() {
     export PATH=$PATH:/usr/bin/ton/validator-engine-console
 }
 
+# Display information about the TON node
 display_node_info() {
     # echo -e "------------------------------------------------------------"
     echo -e "IP                    ${COLOR_GREEN}$PUBLIC_IP:$VALIDATOR_PORT${ENDC}"
@@ -44,14 +45,15 @@ display_node_info() {
     # echo -e "${COLOR_YELLOW}/var/ton-work/db/${ENDC}"
     # ls /var/ton-work/db/
     # echo -e "------------------------------------------------------------"
-    echo -e "${COLOR_YELLOW}/var/ton-work/db/keyring/${ENDC}"
-    ls /var/ton-work/db/keyring/
-    echo -e "------------------------------------------------------------"
-    echo -e "${COLOR_YELLOW}/var/ton-work/db/config.json${ENDC}"
-    cat config.json
-    echo -e "------------------------------------------------------------"
+    # echo -e "${COLOR_YELLOW}/var/ton-work/db/keyring/${ENDC}"
+    # ls /var/ton-work/db/keyring/
+    # echo -e "------------------------------------------------------------"
+    # echo -e "${COLOR_YELLOW}/var/ton-work/db/config.json${ENDC}"
+    # cat config.json
+    # echo -e "------------------------------------------------------------"
 }
 
+# Function to clean old logs
 clean_log() {
     find /var/ton-work/db -name 'LOG.old*' -exec rm {} +
     rm -r /var/ton-work/db/files/packages/temp.archive.*
@@ -184,10 +186,8 @@ generate_liteserver_key() {
 }
 
 ip2dec() {
-    # PUBLIC_IP="125.228.116.218"
     IFS='.' read -ra ADDR <<< "$PUBLIC_IP"
     DEC_IP=$(( (${ADDR[0]} << 24) + (${ADDR[1]} << 16) + (${ADDR[2]} << 8) + ${ADDR[3]} ))
-    echo $DEC_IP
 }
 
 replace_ip_port_config_json() {
