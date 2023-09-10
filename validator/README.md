@@ -1,73 +1,60 @@
 # TON Docker
-
-下載
 ```
 git clone https://github.com/awesome-doge/ton-docker.git
+cd ton-docker/validator
+docker-compose up --build
 ```
 
-編譯
+## docker-compose
 ```
-cd ton-docker
-docker build \
-  -t ton-docker:latest . \
-  --no-cache
+services:
+  ton-node:
+    build:
+      context: ./  
+      dockerfile: Dockerfile 
+
+    image: ton-docker:latest
+    # 容器名稱
+    container_name: ton-node
+    # validator udp + control tcp + liteserver tcp 要開出去
+    ports:
+      - "9527:9527"
+      - "9528:9528"
+
+    environment:
+      - PUBLIC_IP=125.228.116.218
+      - VALIDATOR_PORT=9527 # validator & control 端口
+      - LITESERVER=true # 是否開啟 Liteserver
+      - LITE_PORT=9528 # Liteserver 端口
+      - VALIDATOR_VERBOSITY=2 # LOG 能見度
+      - VALIDATOR_THREADS=2 # 使用的 執行序數量
+      - ARCHIVE_NODE=0 # 是否回 歸檔節點
+      - MAINNET=1 # 是否為主網
+
+    # !!!記得掛硬碟 !!! 只要掛上了硬碟 就不可以再切 主網 或 測試網 因為 DB 已經寫死
+    volumes:
+      - ton-fullnode:/var/ton-work/db
+
+volumes:
+  ton-fullnode:
 ```
 
-創建 volume
+## 取出 key
 ```
-docker volume create ton-work-db
-```
+docker cp ton-node:/var/ton-work/db/client .
+docker cp ton-node:/var/ton-work/db/client.pub .
 
-啟動 
-```
-docker run --name ton-node \
-  --mount source=ton-work-db,target=/var/ton-work/db \
-  --network host \
-  -e "PUBLIC_IP=<YOUR_PUBLIC_IP>" \
-  -e "CONSOLE_PORT=<TCP-PORT1>" \
-  -e "LITESERVER=true" \
-  -e "LITE_PORT=<TCP-PORT2>" \
-  -e "VALIDATOR_VERBOSITY=<1 or 2 or 3 or 4>"
-  -it ton-docker:latest
-```
-```
-docker run --name ton-node \
-  --mount source=ton-work-db,target=/var/ton-work/db \
-  --network host \
-  -e "PUBLIC_IP=125.228.116.218" \
-  -e "CONSOLE_PORT=9527" \
-  -e "LITESERVER=true" \
-  -e "LITE_PORT=9528" \
-  -e "VALIDATOR_VERBOSITY=3" \
-  -e "VALIDATOR_THREADS=3" \
-  -e "VALIDATOR_STATE_TTL=315360000" \
-  -e "VALIDATOR_ARCHIVE_TTL=315360000" \
-  -e "VALIDATOR_BLOCK_TTL=315360000" \
-  -it ton-docker:latest
-```
+docker cp ton-node:/var/ton-work/db/server .
+docker cp ton-node:/var/ton-work/db/server.pub .
 
-## 取出 liteserver.pub
-```
-docker cp <container-id>:/var/ton-work/db/liteserver.pub /your/path
-```
-```
+docker cp ton-node:/var/ton-work/db/liteserver .
 docker cp ton-node:/var/ton-work/db/liteserver.pub .
+
+docker cp ton-node:/var/ton-work/db/config.json .
 ```
 
 ## 交互
-validator-engine-console
-```
-/usr/bin/ton/validator-engine-console/validator-engine-console \
-  -k /var/ton-work/db/client \
-  -p /var/ton-work/db/server.pub \
-  -a <IP>:<TCP-PORT2>
-```
-```
-/usr/bin/ton/validator-engine-console/validator-engine-console \
-  -k /var/ton-work/db/client \
-  -p /var/ton-work/db/server.pub \
-  -a localhost:9527
-```
+### validator-engine-console
 ```
 docker exec \
   -ti ton-node \
@@ -77,32 +64,26 @@ docker exec \
   -a localhost:9527
 ```
 
-lite-client
-```
-/usr/bin/ton/lite-client/lite-client \
-  -p /var/ton-work/db/liteserver.pub \
-  -a <IP>:<TCP-PORT2> 
-```
-```
-/usr/bin/ton/lite-client/lite-client \
-  -p /var/ton-work/db/liteserver.pub \
-  -a localhost:9528
-```
+### lite-client
 ```
 docker exec \
   -ti ton-node \
   /usr/bin/ton/lite-client/lite-client \
   -p /var/ton-work/db/liteserver.pub \
   -a localhost:9528 \
-  --cmd "help"
+  --cmd "getconfig 1"
 ```
 
+```
 docker exec \
   -ti ton-node \
   /usr/bin/ton/lite-client/lite-client \
   -C /usr/bin/ton/global.config.json \
   -a localhost:9528 \
   --cmd "getconfig 1"
+```
+
+---
 
 ```
 docker exec \
@@ -153,3 +134,6 @@ docker exec \
   --cmd "getconfig 40" \
   -v 0
   ```
+
+
+
