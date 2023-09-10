@@ -14,17 +14,17 @@ services:
 
     environment:
       - PUBLIC_IP=125.228.116.218
-      - VALIDATOR_PORT=9527
+      - VALIDATOR_PORT=9527 # validator & control 端口
       - LITESERVER=true # 是否開啟 Liteserver
-      - LITE_PORT=9528
+      - LITE_PORT=9528 # Liteserver 端口
       - VALIDATOR_VERBOSITY=2 # LOG 能見度
       - VALIDATOR_THREADS=2 # 使用的 執行序數量
       - ARCHIVE_NODE=0 # 是否回 歸檔節點
       - MAINNET=1 # 是否為主網
-    volumes:
-      - ton-fullnode:/var/ton-work/db
+#     volumes:
+#       - ton-fullnode:/var/ton-work/db
 
-volumes:
-  ton-fullnode:
+# volumes:
+#   ton-fullnode:
 
 
