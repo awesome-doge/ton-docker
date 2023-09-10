@@ -260,7 +260,7 @@ replace_validator_config() {
 
 # # first addr's categories
 # jq '.addrs[0].categories[]' input.json
-# }
+}
 
 replace_controlInterface() {
     # control's @type
@@ -274,7 +274,7 @@ replace_controlInterface() {
         server
 }
 
-replace_controlprocess {
+replace_controlprocess() {
     # control's allowed @type
     # jq '.control[0].allowed[0]."@type"' input.json
 
@@ -286,7 +286,7 @@ replace_controlprocess {
     client
 }
 
-replace_dht_key {
+replace_dht_key() {
     # jq '.adnl[0]."@type"' input.json
     jq '.adnl[0].id' input.json
     # jq '.adnl[0].category' input.json
@@ -298,7 +298,7 @@ replace_dht_key {
     dht
 }
 
-replace_fullnode_key {
+replace_fullnode_key() {
 
     # jq '.adnl[1]."@type"' input.json
     jq '.adnl[1].id' input.json
