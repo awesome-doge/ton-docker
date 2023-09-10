@@ -47,9 +47,9 @@ display_node_info() {
     echo -e "${COLOR_YELLOW}/var/ton-work/db/keyring/${ENDC}"
     ls /var/ton-work/db/keyring/
     echo -e "------------------------------------------------------------"
-    # echo -e "${COLOR_YELLOW}/var/ton-work/db/config.json${ENDC}"
-    # cat config.json
-    # echo -e "------------------------------------------------------------"
+    echo -e "${COLOR_YELLOW}/var/ton-work/db/config.json${ENDC}"
+    cat config.json
+    echo -e "------------------------------------------------------------"
 }
 
 clean_log() {
@@ -183,6 +183,24 @@ generate_liteserver_key() {
     mv config.json.liteservers config.json
 }
 
+ip2dec() {
+    # PUBLIC_IP="125.228.116.218"
+    IFS='.' read -ra ADDR <<< "$PUBLIC_IP"
+    DEC_IP=$(( (${ADDR[0]} << 24) + (${ADDR[1]} << 16) + (${ADDR[2]} << 8) + ${ADDR[3]} ))
+    echo $DEC_IP
+}
+
+replace_ip_port_config_json() {
+    jq --arg dec_ip "$DEC_IP" --argjson validator_port "$VALIDATOR_PORT" --argjson lite_port "$LITE_PORT" '
+    .addrs[0].ip = ($dec_ip | tonumber) |
+    .addrs[0].port = $validator_port |
+    .liteservers[0].port = $lite_port |
+    .control[0].port = $validator_port' /var/ton-work/db/config.json > /var/ton-work/db/config_updated.json
+
+    # Optionally, to overwrite the original file:
+    mv /var/ton-work/db/config_updated.json /var/ton-work/db/config.json
+}
+
 env_variable
 
 echo -e "------------------------------------------------------------"
@@ -257,6 +275,18 @@ clean_log
 
 echo -e "------------------------------------------------------------"
 
+# ip 轉換為 10進位
+ip2dec
+
+# 刷新 config.json 裡面的 ip 和 port
+replace_ip_port_config_json
+
 display_node_info
 
 exec validator-engine /var/ton-work/db/config.json --global-config /usr/bin/ton/global.config.json --db /var/ton-work/db --verbosity $VALIDATOR_VERBOSITY --threads $VALIDATOR_THREADS --state-ttl $VALIDATOR_STATE_TTL --archive-ttl $VALIDATOR_ARCHIVE_TTL --block-ttl $VALIDATOR_BLOCK_TTL
+
+
+
+
+
+
